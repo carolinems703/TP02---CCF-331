@@ -5,6 +5,7 @@
 #include <limits.h>
 #include <ctype.h>
 #include <time.h>
+#include <math.h>
 #include "grafo.h"
 
 static int ler_linha(char *texto, int capacidade) {
@@ -196,6 +197,13 @@ static void mostrar_caminhos(const Grafo *grafo, int origem) {
     caminhos_minimos_destruir(caminhos);
 }
 
+/* Igualdade de distancias com tolerancia: duas excentricidades iguais na teoria
+   (ex.: as duas pontas de um diametro) podem diferir em ~1e-14 por causa da
+   ordem das somas em ponto flutuante, entao "==" perderia vertices. */
+static int distancias_iguais(double a, double b) {
+    return fabs(a - b) <= 1e-9 * (1.0 + fabs(b));
+}
+
 static double milissegundos(clock_t inicio) {
     return 1000.0 * (double)(clock() - inicio) / CLOCKS_PER_SEC;
 }
@@ -287,11 +295,11 @@ static void mostrar_metricas(const Grafo *grafo) {
     printf("Diametro: %.2f\n", metricas->diametro);
     printf("Centro (excentricidade = raio):");
     for (v = 0; v < metricas->ordem_grafo; v++)
-        if (metricas->excentricidade[v] == metricas->raio)
+        if (distancias_iguais(metricas->excentricidade[v], metricas->raio))
             printf(" %d", v + 1);
     printf("\nPeriferia (excentricidade = diametro):");
     for (v = 0; v < metricas->ordem_grafo; v++)
-        if (metricas->excentricidade[v] == metricas->diametro)
+        if (distancias_iguais(metricas->excentricidade[v], metricas->diametro))
             printf(" %d", v + 1);
     putchar('\n');
     printf("Tempo: %.3f ms\n", tempo);
